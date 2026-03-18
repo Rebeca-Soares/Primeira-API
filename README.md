@@ -7,7 +7,7 @@ O projeto utiliza uma arquitetura de **Services** e **Controllers**, onde toda a
 ## Autoria
 
 - **Nome:** Rebeca Cerqueira
-- **Ambiente:** 
+- **Ambiente:** https://github.com/Rebeca-Soares/Primeira-API
 
 ## Tecnologias
 
