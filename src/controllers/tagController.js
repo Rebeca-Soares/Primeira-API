@@ -1,11 +1,13 @@
 import * as tagService from "../services/tagService.js";
 import * as taskService from "../services/taskService.js";
 
+// Lista todas as tags
 export const getAllTags = (req, res) => {
     const tags = tagService.fetchAllTags();
     res.json(tags);
 };
 
+// Criação de tag com validação de nome obrigatório e prevenção de duplicatas
 export const createTag = (req, res) => {
     const tag = tagService.createTag(req.body);
 
@@ -16,6 +18,7 @@ export const createTag = (req, res) => {
     res.status(201).json(tag);
 }
 
+// Deleta tag e remove associações em tasks
 export const deleteTag = (req, res) => {
     const deletedTag = tagService.deleteTag(req.params.id);
 

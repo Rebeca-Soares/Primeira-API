@@ -6,7 +6,7 @@ export const createComment = (req, res) => {
     const taskId = req.params.id;
     const { userId, conteudo } = req.body;
 
-    // Validação 3: Conteudo é obrigatório
+    // Validação: Conteudo é obrigatório
     if (!conteudo?.trim()) {
         return res.status(400).json({ error: "Conteúdo é obrigatório" });
     }
@@ -15,6 +15,7 @@ export const createComment = (req, res) => {
     res.status(201).json(result);
 };
 
+// Busca comentários de uma tarefa específica, ordenados por data de criação (mais recentes primeiro)
 export const getCommentsByTaskId = (req, res) => {
     
     const comments = commentService.getCommentsByTaskId(req.params.id);

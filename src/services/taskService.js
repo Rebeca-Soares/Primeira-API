@@ -1,30 +1,33 @@
-let tasks = []
-let id = 1
-
+let tasks = [];
+let id = 1;
 let taskTags = []; //Relações Task - Tag
 
 export const getAllTasks = (search, sort) => {
     let filteredTasks = [...tasks];
 
+    // filtro por título
     if (search) {
         filteredTasks = filteredTasks.filter(t => 
-            t.title.toLowerCase().includes(search.toLowerCase()) //Filtra titulo
+            t.title.toLowerCase().includes(search.toLowerCase()) 
         );
     }
 
+    // ordenação por título
     if (sort === "asc") {
-        filteredTasks.sort((a, b) => a.title.localeCompare(b.title)); //ascendente
+        filteredTasks.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sort === "desc") {
-        filteredTasks.sort((a, b) => b.title.localeCompare(a.title)); //descendente
+        filteredTasks.sort((a, b) => b.title.localeCompare(a.title));
     }
 
     return filteredTasks;
 }
 
+// Busca tarefa por ID (usada no middleware de validação)
 export const findTaskById = (taskId) => {
     return tasks.find(t => t.id == Number(taskId));
 };
 
+// Criação de tarefa com validação de título obrigatório e mínimo de caracteres
 export const createTask = (taskData) => {
     if (!taskData.title || taskData.title.length <= 3) {
         return { error: "O titulo da tarefa é obrigatório e tem que ter mais de 3 caracteres" };
@@ -36,13 +39,14 @@ export const createTask = (taskData) => {
         category: taskData.category || "Sem categoria",
         responsibleName: taskData.responsibleName,
         completed: false,
-        conclusionDate: undefined
+        conclusionDate: undefined // Requisito: deve ser undefined até à conclusão
     };
 
     tasks.push(newTask);
     return newTask;
 }
 
+// Atualização de tarefa com lógica para definir ou limpar a data de conclusão
 export const updateTask = (taskId, data) => {
     const task = tasks.find(t => t.id == Number(taskId));
     
@@ -50,16 +54,16 @@ export const updateTask = (taskId, data) => {
         return { error: "Tarefa não encontrada"};
     }
 
+    // Atualização apenas os campos enviados 
     task.title = data.title ?? task.title;
     task.category = data.category ?? task.category;
     task.responsibleName = data.responsibleName ?? task.responsibleName;
 
+    // Gestão automatica de timestamp de conclusão
     if (data.completed !== undefined) {
         if (data.completed && !task.completed) {
-            // Se mudou para concluída agora, define a data atual
             task.conclusionDate = new Date().toLocaleString();
         } else if (!data.completed) {
-            // Se desmarcou como concluída, remove a data (undefined)
             task.conclusionDate = undefined;
         }
         task.completed = data.completed;
@@ -68,6 +72,7 @@ export const updateTask = (taskId, data) => {
     return task;
 }
 
+// Exclusão de tarefa e limpeza de associações com tags
 export const deleteTask = (taskId) => {
     const taskToDelete = tasks.find(t => t.id === Number(taskId));
 
@@ -82,6 +87,7 @@ export const deleteTask = (taskId) => {
 
 };
 
+// Estatísticas gerais de tarefas
 export const getTaskStats = () => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(t => t.completed).length;
@@ -96,6 +102,7 @@ export const getTaskStats = () => {
     };
 }
 
+// Associação de tags a tarefas, evitando duplicações e validando existência de tarefa e tag
 export const addTagToTask = (taskId, tagId) => {
     const tId = Number(taskId);
     const tgId = Number(tagId);
@@ -111,12 +118,12 @@ export const addTagToTask = (taskId, tagId) => {
     return newAssociation;
 };
 
+// Limpeza de associações de uma tag deletada em todas as tarefas
 export const removeTagFromAllTasks = (tagId) => {
-    taskTags = taskTags.filter(a => a.tagId !== Number(tagId)); //limpa tag deletada
+    taskTags = taskTags.filter(a => a.tagId !== Number(tagId));
 };
 
-// Listar tarefas de uma tag
-
+// Listar tarefas de uma tag, ignorando registos orfãos de tarefas deletadas
 export const getTasksByTagId = (tagId) => {
     const tId = Number(tagId);
     const relationsTags = taskTags.filter(a => a.tagId === tId);
