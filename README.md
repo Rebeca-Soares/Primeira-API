@@ -21,7 +21,8 @@ O projeto utiliza uma arquitetura de **Services** e **Controllers**, onde toda a
 - O objetivo deste projeto é criar uma API completa para gerenciamento de tarefas, incluindo utilizadores, tarefas, tags e comentários.
 
 - Deve ser entregue todos os endpoints mencionados em aula e nos exercícios de entrega.
-Usar Node.js com Express e JSON nas respostas.
+
+- Usar Node.js com Express e JSON nas respostas.
 
 - Todos os dados devem ser mantidos em memória usando arrays (simulando base de dados).
 
@@ -44,14 +45,31 @@ O servidor estará ativo em: http://localhost:3000.
 
 Estrutura do Projeto:
 
-Aula_03/
-├── server.js                # Configuração e inicialização do Express
-├── package.json             # Scripts e dependências
-└── src/
-    ├── controllers/         # Recebem pedidos e enviam respostas JSON
-    ├── services/            # Lógica de negócio e gestão de arrays
-    ├── routes/              # Definição das rotas (users, tasks, tags)
-    └── middlewares/         # Logs e validações de existência
+```bash
+
+src/
+	controllers/
+		commentController.js
+		tagController.js
+		taskController.js
+		userController.js
+	middlewares/
+		checkUserExists.js
+		loggerMiddleware.js
+	routes/
+		tagRoutes.js
+		taskRoutes.js
+		userRoutes.js
+	services/
+		commentServices.js
+		tagServices.js
+		taskServices.js
+		userServices.js
+server.js
+package.json
+gitignore
+
+```
 
 ## Endpoints da API
 
@@ -131,9 +149,11 @@ curl -X POST http://localhost:3000/tasks/1/comments \
 
 ## Validações Implementadas
 
-- Utilizadores: O campo email deve ser válido e o nome é obrigatório para a criação.
+- Utilizadores: 
+O campo email deve ser válido e o nome é obrigatório para a criação.
 
-- Tarefas: O titulo é obrigatório. Se a tarefa for marcada como completed, o sistema mantém a integridade dos dados.
+- Tarefas: 
+O titulo é obrigatório e tem que ter mais de 3 caracteres. Se a tarefa for marcada como completed, o sistema mantém a integridade dos dados.
 
 - Tags: O nome da tag é obrigatório, não pode ser vazio e o sistema impede a criação de nomes duplicados.
 
