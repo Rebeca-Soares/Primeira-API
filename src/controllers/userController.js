@@ -4,6 +4,11 @@ import * as userService from "../services/userService.js";
 export const getAllUsers = (req, res) => {
     const { search, sort } = req.query;
     const users = userService.fetchAllUsers(search, sort);
+
+    if (search && users.length === 0) {
+        return res.status(404).json({ message: `Nenhum utilizador encontrado com o termo: "${search}"` });
+    }
+    
     res.json(users);
 };
 

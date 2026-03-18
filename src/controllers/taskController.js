@@ -6,6 +6,11 @@ import * as tagService from "../services/tagService.js";
 export const getAllTasks = (req, res) => {
     const { search, sort } = req.query;
     const tasks = taskService.getAllTasks(search, sort);
+
+    if (search && tasks.length === 0) {
+        res.status(404).json({ message: "Nenhuma tarefa encontrada com o título especificado" });
+    }
+    
     res.json(tasks); 
 };
 
