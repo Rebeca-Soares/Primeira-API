@@ -44,26 +44,29 @@ Estrutura do Projeto:
 ```bash
 
 src/
-	controllers/
-		commentController.js
-		tagController.js
-		taskController.js
-		userController.js
-	middlewares/
-		checkUserExists.js
-		loggerMiddleware.js
-	routes/
-		tagRoutes.js
-		taskRoutes.js
-		userRoutes.js
-	services/
-		commentServices.js
-		tagServices.js
-		taskServices.js
-		userServices.js
+    controllers/
+        commentController.js
+        tagController.js
+        taskController.js
+        userController.js
+    middlewares/
+        checkUserExists.js
+        checkTasksExists.js
+        loggerMiddleware.js
+    routes/
+        tagRoutes.js
+        taskRoutes.js
+        userRoutes.js
+    services/
+        commentServices.js
+        tagServices.js
+        taskServices.js
+        userServices.js
 server.js
 package.json
-gitignore
+.gitignore
+.database/
+    ddl-create-tables.sql
 
 ```
 
