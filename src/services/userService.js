@@ -63,10 +63,6 @@ export const findUserById = async (id) => {
 export const updateUser = async (userId, {name, email, active}) => {
     const user = await findUserById(userId);
 
-    if (!user) {
-        return { error: "Usuário não encontrado" };
-    }
-
     // Validações 
     if (name !== undefined && name.trim() === "") {
         return { error: "O nome não pode ser vazio." };
@@ -80,6 +76,7 @@ export const updateUser = async (userId, {name, email, active}) => {
         return { error: "O campo 'active' deve ser um booleano." };
     }
 
+    //atualização de dados de usuário, mantendo os valores existentes para campos não fornecidos (PUT/PATCH)
     const updatedUser = {
         name: name ?? user.name,
         email: email ?? user.email,

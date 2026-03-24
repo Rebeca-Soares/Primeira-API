@@ -60,7 +60,7 @@ export const findTaskById = async (id) => {
 export const updateTask = async (taskId, {title, category, responsibleName, completed}) => {
     const task =  await findTaskById(taskId);
 
-    // Atualização apenas dos campos fornecidos
+    // Atualização de dados de um usuario existente, mantendo os campos nao fornecidos (PUT/PATCH)
     const updatedTask = {
     title: title ?? task.title,
     category: category ?? task.category,
@@ -111,9 +111,6 @@ export const deleteTask = async (taskId) => {
         return { error: "Tarefa não encontrada" };
     }
 
-    //a DB faz agora, pode deletar
-    /* tasks = tasks.filter(t => t.id !== Number(taskId));
-    taskTags = taskTags.filter(rel => rel.taskId !== Number(taskId)); // Remove associações da tarefa deletada */
     return { message: "Tarefa deletada com sucesso" };
 };
 
