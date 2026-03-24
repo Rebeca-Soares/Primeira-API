@@ -1,34 +1,30 @@
 # Projeto 1 - Criando uma API - Gestor de Tarefas
 
-API REST completa desenvolvida em Node.js e Express para a gestão de utilizadores, tarefas, tags e comentários. 
+API REST completa desenvolvida em Node.js e Express para a gestão de utilizadores, tarefas, tags e comentários.
 
-O projeto utiliza uma arquitetura de **Services** e **Controllers**, onde toda a lógica de negócio é isolada nos serviços e os dados são mantidos em memória (arrays).
+O projeto utiliza uma arquitetura de **Services** e **Controllers**, onde toda a lógica de negócio é isolada nos serviços e os dados são armazenados em um banco de dados relacional (MySQL).
 
 ## Autoria
 
 - **Nome:** Rebeca Cerqueira
-- **Ambiente:** https://github.com/Rebeca-Soares/Primeira-API
+- **Repositório:** [GitHub - Primeira API](https://github.com/Rebeca-Soares/Primeira-API/tree/Aula_03_BD)
 
 ## Tecnologias
 
 - **Node.js**
 - **Express 5**
 - **JavaScript**
+- **MySQL**
 - **npm**
 
-## Requisitos:
+## Requisitos
 
 - O objetivo deste projeto é criar uma API completa para gerenciamento de tarefas, incluindo utilizadores, tarefas, tags e comentários.
-
 - Deve ser entregue todos os endpoints mencionados em aula e nos exercícios de entrega.
-
 - Usar Node.js com Express e JSON nas respostas.
-
-- Todos os dados devem ser mantidos em memória usando arrays (simulando base de dados).
-
-- Validações e lógica de negócio devem ser feitas nos services, controllers apenas retornam JSON.
-
-- IDs devem ser gerados automaticamente para todas as entidades (users, tasks, tags, comments).
+- Todos os dados devem ser armazenados em um banco de dados relacional (MySQL).
+- Validações e lógica de negócio devem ser feitas nos services, enquanto os controllers apenas retornam JSON.
+- IDs são gerados automaticamente pelo banco de dados para todas as entidades (users, tasks, tags, comments).
 
 ## Instalação e Execução
 
