@@ -1,101 +1,92 @@
 import * as userService from "../services/userService.js";
 
 // Recupera listafem geral de utilizafdores
-export const getAllUsers = (req, res) => {
-    const { search, sort } = req.query;
-    const users = userService.fetchAllUsers(search, sort);
+export const getAllUsers = async (req, res) => {
+    try {
+        const { search, sort } = req.query;
+        const users = await userService.fetchAllUsers(search, sort);
 
-    if (search && users.length === 0) {
-        return res.status(404).json({ message: `Nenhum utilizador encontrado com o termo: "${search}"` });
+        if (!users || users.length === 0) {
+            return res.status(404).json({ message: `Nenhum utilizador encontrado com o termo: "${search}"` });
+        }
+
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar utilizadores." });
     }
-    
-    res.json(users);
 };
 
 //Busca por utilizador
 export const getUserById = (req, res) => {
-    if (!req.user) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+    try {
+        res.json(req.user);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar utilizador." });
     }
-
-    // Segurança: O middleware checkUserExists garante que req.user existe
-    res.json(req.user);
 }
 
 //Criação de um novo usuario e validações
-export const postUser = (req, res) => {
-    const { name, email, active } = req.body;
-
-    if (!name || name.trim() === "") {
-        return res.status(400).json({ error: "O nome é obrigatório." });
-    }
-
-    // Validar se o email é válido
-    if (!email || !email.includes("@")) {
-        return res.status(400).json({ error: "Email inválido" });
-    }
-
-    if (active !== undefined && typeof active !== "boolean") {
-        return res.status(400).json({ error: "O campo 'active' deve ser booleano." });
-    }
-
-    // Criar o novo utilizador com valores padrão
-    const newUser = userService.createUser(
-        {
-            name,
-            email,
-            active
+export const createUser = async (req, res) => {
+    try { 
+        const { name, email, active } = req.body;
+        // Validar os dados do usuário usando o serviço
+        const validationError = userService.validateUserData({ name, email, active });
+        if (validationError) {
+            return res.status(400).json(validationError);
         }
-);
-
-    res.status(201).json(newUser);
+        // Criar o novo utilizador com valores padrão
+        const newUser = await userService.createUser({ name, email, active});
+        res.status(201).json(newUser);
+    }
+    catch (error) {
+        console.error("Erro ao criar utilizador:", error); // Log do erro no servidor
+        res.status(500).json({ 
+            error: "Erro ao criar utilizador.",
+            details: process.env.NODE_ENV === "development" ? error.message : undefined // Inclui detalhes apenas em dev
+        });
+    }
 };
 
 //Atualiza dados de um utilizador existente
-export const updateUser = (req, res) => {
-    const user = req.user; // Obtém o usuário do middleware
+export const updateUser = async (req, res) => {
+    try {
+        const user = req.user; // Obtém o usuário do middleware
 
-    if (!user) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+        const { name, email, active } = req.body;
+
+        // Atualizar o usuário
+        const updatedUser = await userService.updateUser(user.id, { name, email, active });
+
+        if (updatedUser.error) {
+            return res.status(404).json(updatedUser);
+        }
+
+        res.json(updatedUser); // Retorna o usuário atualizado
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao atualizar utilizador." });
     }
-
-    const { name, email, active } = req.body;
-
-    if (name === "") {
-        return res.status(400).json({ error: "Nome não pode ser vazio" });
-    }
-    
-    if (email !== undefined && !email.includes("@")) {
-        return res.status(400).json({ error: "E-mail inválido." });
-    }
-
-    if (active !== undefined && typeof active !== "boolean") {
-        return res.status(400).json({ error: "O campo 'active' deve ser um booleano." });
-    }
-
-    const updatedUser = userService.updateUser(user.id, { name, email, active }); // usuario não encontrado 
-
-    if (updatedUser.error) {
-        return res.status(404).json(updatedUser);
-    }
-
-    res.json(updatedUser); // retorna o usuário atualizado 
 };
 
-
 //Remove um utilizador do sistema. Valida a conclusão da remoção no array em memória.
-export const removeUser = (req, res) => {
-    const result = userService.deleteUser(req.params.id);
+export const removeUser = async (req, res) => {
 
-    if (result.error) {
-        return res.status(404).json(result);
+    try {
+        const result = await userService.deleteUser(req.params.id);
+        if (result.error) {
+            return res.status(404).json(result);
+        }
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao remover utilizador." });
     }
-
-    res.json(result);
 };
 
 //Fornece métricas agregadas da base de utilizadores
-export const getUserStats = (req, res) => {
-    const stats = userService.getUserStats();
-    res.json(stats);
+export const getUserStats = async (req, res) => {
+    try {
+        const stats = await userService.getUserStats();
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao obter estatísticas de utilizadores." });
+    }
 }

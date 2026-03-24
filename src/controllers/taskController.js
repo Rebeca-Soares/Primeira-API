@@ -3,80 +3,102 @@ import * as tagService from "../services/tagService.js";
 
 
  //Retorna a listagem de tarefas com suporte a query params para filtros e ordenação
-export const getAllTasks = (req, res) => {
+export const getAllTasks = async (req, res) => {
+    try {
     const { search, sort } = req.query;
-    const tasks = taskService.getAllTasks(search, sort);
+    const tasks = await taskService.getAllTasks(search, sort);
 
     if (search && tasks.length === 0) {
         res.status(404).json({ message: "Nenhuma tarefa encontrada com o título especificado" });
     }
     
     res.json(tasks); 
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar tarefas." });
+    }
 };
 
 //Recupera uma tarefa específica injetada previamente pelo middleware de validação
 export const getTaskById = (req, res) => {
-    res.json(req.task); 
-}
+    try {
+        res.json(req.task); 
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar tarefa." });
+    }
+};
 
 //Orquestra a criação de uma nova tarefa com validação
-export const createTask = (req, res) => {
-    const task = taskService.createTask(req.body);
-    if (task.error) {
-        return res.status(400).json({ error: task.error }); // validação de título obrigatório
+export const createTask = async (req, res) => {
+    try {
+        const task = await taskService.createTask(req.body);
+
+        // Validação do service (título obrigatório, etc.)
+        if (task.error) {
+            return res.status(400).json({ error: task.error });
+        }
+
+        // Retorna a tarefa criada com status 201
+        res.status(201).json(task);
+    } catch (error) {
+        console.error(error); // opcional, bom para debug
+        res.status(500).json({ 
+            error: "Erro ao criar tarefa."
+        });
     }
-    res.status(201).json(task);
-}
+};
 
 // Atualiza os dados da tarefa utilizando o objeto validado no middleware e a lógica de gestão de conclusão definida no serviço
-export const updateTask = (req, res) => {
-    const task = taskService.updateTask(req.task.id, req.body);
+export const updateTask = async (req, res) => {
+    try {
+    const task = await taskService.updateTask(req.task.id, req.body);
     if (task.error) {
         return res.status(404).json(task); // task inexistente 
     }
     res.json(task);
-}
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao atualizar tarefa." });
+    }
+};
 
 //Remove uma tarefa e retorna o objeto deletado para confirmação
-export const deleteTask = (req, res) => {
-    const result = taskService.deleteTask(req.params.id);
-    if (result?.error) {
-        return res.status(404).json(result); //task não encontrada
+export const deleteTask = async (req, res) => {
+    try {
+        const result = await taskService.deleteTask(req.params.id);
+        if (result?.error) {
+            return res.status(404).json(result); //task não encontrada
+        }
+        res.json(result);
     }
-    res.json({ message: "Tarefa deletada com sucesso", task: result });
+    catch (error) {
+        res.status(500).json({ error: "Erro ao deletar tarefa." });
+    }
 };
 
 //Endpoint de agregação de dados para geração de métricas
-export const getTaskStats = (req, res) => {
-    const stats = taskService.getTaskStats();
-    res.json(stats); // estatisticas gerais
+export const getTaskStats = async (req, res) => {
+    try {
+        const stats = await taskService.getTaskStats();
+        res.json(stats); // estatisticas gerais
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao obter estatísticas." });
+    }
 };
 
 //Realiza o vínculo entre Tarefas e Tags com validação cruzada de existência
-export const associateTag = (req, res) => {
-    const taskId = req.params.id;
-    const { tagId } = req.body;
+export const associateTag = async (req, res) => {
+    try {
+        const taskId = req.params.id;
+        const { tagId } = req.body;
 
-    // Validação de Integridade
+        // Cria associação
+        const result = await taskService.addTagToTask(taskId, tagId);
 
-    // Verifica se a tarefa existe
-    const task = taskService.findTaskById(taskId);
-    if (!task) {
-        return res.status(404).json({ error: "Tarefa não encontrada" });
+        if (result.error) {
+            return res.status(400).json(result); //tag duplicada
+        }
+
+        res.status(201).json(result);  //associação criada
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao associar tag à tarefa." });
     }
-
-    // Verifica se a tag existe
-    const tag = tagService.findTagById(tagId);
-    if (!tag) {
-        return res.status(404).json({ error: "Tag não encontrada" });
-    }
-
-    // Cria associação
-    const result = taskService.addTagToTask(taskId, tagId);
-
-    if (result.error) {
-        return res.status(400).json(result); //tag duplicada
-    }
-
-    res.status(201).json(result);  //associação criada
 };

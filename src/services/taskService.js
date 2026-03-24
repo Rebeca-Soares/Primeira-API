@@ -1,136 +1,183 @@
-let tasks = [];
-let id = 1;
-let taskTags = []; //Relações Task - Tag
+import { db } from "../../db.js";
 
-export const getAllTasks = (search, sort) => {
-    let filteredTasks = [...tasks];
+
+export const getAllTasks = async (search, sort) => {
+    let query = "SELECT * FROM tasks";
+    const params = [];
 
     // filtro por título
     if (search) {
-        filteredTasks = filteredTasks.filter(t => 
-            t.title.toLowerCase().includes(search.toLowerCase()) 
-        );
+        query += " WHERE title LIKE ?";
+        params.push(`%${search}%`);
     }
 
     // ordenação por título
     if (sort === "asc") {
-        filteredTasks.sort((a, b) => a.title.localeCompare(b.title));
+        query += " ORDER BY title ASC";
     } else if (sort === "desc") {
-        filteredTasks.sort((a, b) => b.title.localeCompare(a.title));
+        query += " ORDER BY title DESC";
     }
 
-    return filteredTasks;
+    const [rows] = await db.query(query, params);
+    return rows;
 }
 
-// Busca tarefa por ID (usada no middleware de validação)
-export const findTaskById = (taskId) => {
-    return tasks.find(t => t.id == Number(taskId));
-};
-
 // Criação de tarefa com validação de título obrigatório e mínimo de caracteres
-export const createTask = (taskData) => {
-    if (!taskData.title || taskData.title.length <= 3) {
+export const createTask = async ({title, category, responsibleName}) => {
+
+    if (!title || title.length <= 3) {
         return { error: "O titulo da tarefa é obrigatório e tem que ter mais de 3 caracteres" };
     }
 
-    const newTask = {
-        id: id++,
-        title: taskData.title,
-        category: taskData.category || "Sem categoria",
-        responsibleName: taskData.responsibleName,
-        completed: false,
-        conclusionDate: undefined // Requisito: deve ser undefined até à conclusão
-    };
+    //validação para a categoria
+    const taskCategory = category || "Sem categoria";
 
-    tasks.push(newTask);
-    return newTask;
+    const query = "INSERT INTO tasks (title, category, responsibleName, completed, conclusionDate, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
+
+    const [result] = await db.query(query, [title, taskCategory, responsibleName || null, false, null, new Date()]);
+
+    return {
+        id: result.insertId,
+        title,
+        category: taskCategory,
+        responsibleName: responsibleName || null,
+        completed: false,
+        conclusionDate: null,
+        crearedAt: new Date()
+    };
 }
 
+// Busca tarefa por ID (usada no middleware de validação)
+export const findTaskById = async (id) => {
+    const [rows] = await db.query(
+        "SELECT * FROM tasks WHERE id = ?",
+        [id]);
+    return rows[0]; // Retorna o primeiro resultado ou undefined se não encontrado
+};
+
+
 // Atualização de tarefa com lógica para definir ou limpar a data de conclusão
-export const updateTask = (taskId, data) => {
-    const task = tasks.find(t => t.id == Number(taskId));
-    
-    if (!task) {
-        return { error: "Tarefa não encontrada"};
+export const updateTask = async (taskId, {title, category, responsibleName, completed}) => {
+    const task =  await findTaskById(taskId);
+
+    // Atualização apenas dos campos fornecidos
+    const updatedTask = {
+    title: title ?? task.title,
+    category: category ?? task.category,
+    responsibleName: responsibleName ?? task.responsibleName
     }
 
-    // Atualização apenas os campos enviados 
-    task.title = data.title ?? task.title;
-    task.category = data.category ?? task.category;
-    task.responsibleName = data.responsibleName ?? task.responsibleName;
+    // Gestão automatico do completed e data de conclusão
+    let updatedCompleted = completed !== undefined ? completed : task.completed;
+    let conclusionDate = task.conclusionDate;
 
-    // Gestão automatica de timestamp de conclusão
-    if (data.completed !== undefined) {
-        if (data.completed && !task.completed) {
-            task.conclusionDate = new Date().toLocaleString();
-        } else if (!data.completed) {
-            task.conclusionDate = undefined;
+    if (completed !== undefined) {
+        if (completed && !task.completed) {
+            conclusionDate = new Date();
+        } else if (!completed) {
+            conclusionDate = null;
         }
-        task.completed = data.completed;
     }
 
-    return task;
+    // Atualização do banco de dados
+    const query = "UPDATE tasks SET title = ?, category = ?, responsibleName = ?, completed = ?, conclusionDate = ? WHERE id = ?";
+    
+    await db.query(query, [
+        updatedTask.title,
+        updatedTask.category,
+        updatedTask.responsibleName,
+        updatedCompleted,
+        conclusionDate,
+        taskId
+    ]);
+
+    //retorna tarefa atualizada
+    return {
+        id: taskId,
+        title: updatedTask.title,
+        category: updatedTask.category,
+        responsibleName: updatedTask.responsibleName,
+        completed: updatedCompleted,
+        conclusionDate,
+        createdAt: task.createdAt
+    };
 }
 
 // Exclusão de tarefa e limpeza de associações com tags
-export const deleteTask = (taskId) => {
-    const taskToDelete = tasks.find(t => t.id === Number(taskId));
+export const deleteTask = async (taskId) => {
+    const [result] = await db.query("DELETE FROM tasks WHERE id = ?", [taskId]);
 
-    if (!taskToDelete) {
+    if (result.affectedRows === 0) {
         return { error: "Tarefa não encontrada" };
     }
 
-    tasks = tasks.filter(t => t.id !== Number(taskId));
-    taskTags = taskTags.filter(rel => rel.taskId !== Number(taskId)); // Remove associações da tarefa deletada
-
-    return taskToDelete;
-
+    //a DB faz agora, pode deletar
+    /* tasks = tasks.filter(t => t.id !== Number(taskId));
+    taskTags = taskTags.filter(rel => rel.taskId !== Number(taskId)); // Remove associações da tarefa deletada */
+    return { message: "Tarefa deletada com sucesso" };
 };
 
 // Estatísticas gerais de tarefas
-export const getTaskStats = () => {
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.completed).length;
-    const pendingTasks = tasks.filter(t => !t.completed).length;
-    const percentActiveTasks = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+export const getTaskStats = async () => {
+    const [totalRows] = await db.query("SELECT COUNT(*) AS totalTasks FROM tasks");
+    const totalTasks = totalRows[0].totalTasks;
+    
+    const [completedRows] = await db.query("SELECT COUNT(*) AS completedTasks FROM tasks WHERE completed = true");
+    const completedTasks = completedRows[0].completedTasks;
+    
+    const pendingTasks = totalTasks - completedTasks;
+
+    const percentCompletedTasks = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(2) + "%" 
+    : "0%";
 
     return {
-        "Total Tasks": totalTasks,
-        "Concluídas": completedTasks,
-        "Pendentes": pendingTasks,
-        percentActiveTasks: percentActiveTasks.toFixed(2) + "%"
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        percentCompletedTasks
     };
 }
 
 // Associação de tags a tarefas, evitando duplicações e validando existência de tarefa e tag
-export const addTagToTask = (taskId, tagId) => {
+export const addTagToTask = async (taskId, tagId) => {
     const tId = Number(taskId);
     const tgId = Number(tagId);
 
-    //evitar duplicação da mesma associação
-    const exists = taskTags.find(taskTag => taskTag.taskId === tId && taskTag.tagId === tgId)
+    //verificar existência da tag
+    const [tagRows] = await db.query("SELECT * FROM tags WHERE id = ?", [tgId]);
 
-    if (exists) {
-        return {error: "Tag já associada a esta tarefa"};
+    if (tagRows.length === 0) {
+        return {error: "Tag não encontrada"};
     }
-    const newAssociation = { taskId: tId, tagId: tgId };
-    taskTags.push(newAssociation);
-    return newAssociation;
+
+    //evitar duplicação da mesma associação
+    const [assocRows] = await db.query("SELECT * FROM task_tags WHERE taskId = ? AND tagId = ?", [tId, tgId]);
+
+    if (assocRows.length > 0) {
+        return { error: "Tag já associada a esta tarefa" };
+    }
+
+    //cria a associação tag task
+    await db.query(
+        "INSERT INTO task_tags (taskId, tagId) VALUES (?, ?)",
+        [tId, tgId]);
+
+    return { taskId: tId, tagId: tgId, message: "Tag associada à tarefa com sucesso" };
 };
 
 // Limpeza de associações de uma tag deletada em todas as tarefas
-export const removeTagFromAllTasks = (tagId) => {
-    taskTags = taskTags.filter(a => a.tagId !== Number(tagId));
+export const removeTagFromAllTasks = async (tagId) => {
+    await db.query("DELETE FROM task_tags WHERE tagId = ?", [tagId]);
 };
 
 // Listar tarefas de uma tag, ignorando registos orfãos de tarefas deletadas
-export const getTasksByTagId = (tagId) => {
+export const getTasksByTagId = async (tagId) => {
     const tId = Number(tagId);
-    const relationsTags = taskTags.filter(a => a.tagId === tId);
 
-    const tasksOfTag = relationsTags
-        .map(rel => tasks.find(t => t.id === rel.taskId))
-        .filter(t => t); //remover tasks deletadas
+    const [rows] = await db.query(
+        "SELECT t.* FROM tasks t JOIN task_tags tt ON t.id = tt.taskId WHERE tt.tagId = ?",
+        [tId]
+    );
 
-    return tasksOfTag;
+    return rows;
 };

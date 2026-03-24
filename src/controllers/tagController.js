@@ -2,41 +2,58 @@ import * as tagService from "../services/tagService.js";
 import * as taskService from "../services/taskService.js";
 
 // Lista todas as tags
-export const getAllTags = (req, res) => {
-    const tags = tagService.fetchAllTags();
-    res.json(tags);
+export const getAllTags = async (req, res) => {
+    try {
+        const tags = await tagService.fetchAllTags();
+        res.json(tags);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar tags." });
+    }
 };
 
+
 // Criação de tag com validação de nome obrigatório e prevenção de duplicatas
-export const createTag = (req, res) => {
-    const tag = tagService.createTag(req.body);
+export const createTag = async (req, res) => {
+    try {
+        const tag = await tagService.createTag(req.body);
 
-    if (tag.error) {
-        return res.status(400).json({ error: tag.error }); // validação
+        if (tag.error) {
+            return res.status(400).json({ error: tag.error }); // validação
+        }
+
+        res.status(201).json(tag);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao criar tag." });
     }
-
-    res.status(201).json(tag);
 }
 
 // Deleta tag e remove associações em tasks
-export const deleteTag = (req, res) => {
-    const deletedTag = tagService.deleteTag(req.params.id);
+export const deleteTag = async (req, res) => {
+    try {
+        const deletedTag = await tagService.deleteTag(req.params.id);
 
-    if (deletedTag.error) {
-        return res.status(404).json(deletedTag); // tag não encontrada
+        if (deletedTag.error) {
+            return res.status(404).json(deletedTag); // tag não encontrada
+        }
+
+        res.json({ message: "Tag deletada com sucesso"});
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao deletar tag." });
     }
-
-    res.json({ message: "Tag deleted successfully", tag: deletedTag });
 }
 
 // Lista todas as tasks associadas a uma tag
-export const getTasksByTagId = (req, res) => {
-    const { id } = req.params;
+export const getTasksByTagId = async (req, res) => {
+    try {
+        const tagId = req.params.id;
 
-    const tag = tagService.findTagById(id);
-    if (!tag) {
-        return res.status(404).json({ error: "Tag not found" });
+        const tag = await tagService.findTagById(tagId);
+        if (!tag) {
+            return res.status(404).json({ error: "Tag not found" });
+        }
+        const tasks = await taskService.getTasksByTagId(tagId);
+        res.json(tasks); // retorna tasks associadas à tag
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao buscar tasks por tag." });
     }
-    const tasks = taskService.getTasksByTagId(id);
-    res.json(tasks); // retorna tasks associadas à tag
 }

@@ -1,30 +1,40 @@
-const comments = []; // Relacionamento 1:N (Comentários pertencem a uma Task)
-let commentId = 1;
+import db from "../../db.js";
+
+// Busca todas os comentarios
+export const fetchAllComments = async () => {
+    const [rows] = await db.query("SELECT * FROM comments");
+    return rows;
+};
+
+// Criação 
 
 // Criação de comentário vinculado a uma tarefa e utilizafor com validação de conteúdo obrigatório
-export const createComment = (taskId, userId, conteudo) => {
+export const createComment = async (taskId, userId, conteudo) => {
     
     if (!conteudo || conteudo.trim() === "") {
         return { error: "Conteúdo do comentário não pode ser vazio" };
     }
-    
-    const newComment = {
-        id: commentId++,
-        taskId: Number(taskId), 
-        userId: Number(userId), 
-        conteudo: conteudo,
-        dataCriacao: new Date().toISOString() // ISO format para facilitar ordenação posterior
-    };
 
-    comments.push(newComment);
-    return newComment;
+    const query = `INSERT INTO comments (taskId, userId, conteudo) VALUES (?, ?, ?)`;
+
+    const [result] = await db.execute(query, [taskId, userId, conteudo]);
+    
+    return {
+        id: result.insertId,
+        taskId: Number(taskId), 
+        userId: userId ? Number(userId) : null, 
+        conteudo
+    }
 };
 
 // Busca comentários de uma tarefa específica, ordenados por data de criação (mais recentes primeiro)
-export const getCommentsByTaskId = (taskId) => {
+export const getCommentsByTaskId = async (taskId) => {
     const tId = Number(taskId);
     
-    const taskComments = comments.filter(c => c.taskId === tId);
+    const query = `
+    SELECT * FROM comments WHERE taskId = ? ORDER BY dataCriacao DESC`;    
+    
+    const [rows] = await db.execute(query, [tId]);
 
-    return taskComments.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+    return rows;
 };

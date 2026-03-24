@@ -1,44 +1,45 @@
+import db from "../../db.js";
 import * as taskService from "./taskService.js";
 
-let tags = [];
-let TagId = 1;
 
 // Busca todas as tags
-export const fetchAllTags = () => {
-    return tags;
+export const fetchAllTags = async () => {
+    const [rows] = await db.query("SELECT * FROM tags");
+    return rows;
 };
 
 // Criação de tag com validação de nome obrigatório e prevenção de duplicatas
-export const createTag = (tagData) => {
-    if (!tagData.name || tagData.name.trim() === "") {
+export const createTag = async ({name}) => {
+
+    if (!name || name.trim() === "") {
         return { error: "O nome da tag é obrigatório" };
     }
 
-    const exists = tags.find(t => t.name.toLowerCase() === tagData.name.toLowerCase());
-    if (exists) return { error: "Tag já existe" };
+    const [rows] = await db.query("SELECT * FROM tags WHERE name = ?", [name.trim()]);
+    if (rows.length > 0) {
+        return { error: "Tag já existe" };
+    }
 
-    const newTag = {
-        id: TagId++,
-        name: tagData.name.trim(),
+    const [result] = await db.query("INSERT INTO tags (name) VALUES (?)", [name]);
+
+    return {
+        id: result.insertId,
+        name: name,
     };
-
-    tags.push(newTag);
-    return newTag;
 }
 
 // Deleta tag e remove associações em tasks
-export const deleteTag = (tagId) => {
-    const idNum = Number(tagId);
-    const tag = tags.find(t => t.id === idNum);
-    if (!tag) return { error: "Tag não encontrada" };
+export const deleteTag = async (tagId) => {
+    const [result] = await db.query("DELETE FROM tags WHERE id = ?", [tagId]);
 
-    tags = tags.filter(t => t.id !== idNum);
-    //Mantém a integridade referencial ao remover a tag de todas as tarefas associadas.
-    taskService.removeTagFromAllTasks(idNum); 
-    return tag; 
+    if (result.affectedRows === 0) 
+        return { error: "Tag não encontrada" };
+
+    return { message: "Tag deletada com sucesso"}; 
 };
 
 // Busca tag por ID
-export const findTagById = (tagId) => {
-    return tags.find(t => t.id === Number(tagId));
+export const findTagById = async (tagId) => {
+    const [rows] = await db.query("SELECT * FROM tags WHERE id = ?", [tagId]);
+    return rows[0]; // retorna a tag encontrada ou undefined
 };

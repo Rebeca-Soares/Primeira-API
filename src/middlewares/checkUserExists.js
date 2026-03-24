@@ -1,8 +1,8 @@
 import * as userService from "../services/userService.js";
 
-export const checkUserExists = (req, res, next) => {
+export const checkUserExists = async (req, res, next) => {
     const userId = req.params.id;   
-    const user = userService.findUserById(userId);
+    const user = await userService.findUserById(userId);
     
     if (!user) {
         return res.status(404).json({ error: "Utilizador não encontrado" });
@@ -11,3 +11,5 @@ export const checkUserExists = (req, res, next) => {
     req.user = user;
     next();
 };
+
+//await userService.findUserById(userId) para garantir que a função é resolvida antes de prosseguir.

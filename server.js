@@ -3,6 +3,9 @@ import tasksRoutes from "./src/routes/tasksRoutes.js"; // Rotas de tasks
 import userRoutes from "./src/routes/userRoutes.js"; // Rotas de users
 import { requestLogger } from "./src/middlewares/logger.js"; // Middleware de logging
 import tagRoutes from "./src/routes/tagRoutes.js"; // Rotas de tags
+import dotenv from "dotenv"; // Para carregar variáveis de ambiente
+
+dotenv.config(); // Carrega variáveis de ambiente do .env
 
 const app = express();
 
@@ -19,3 +22,6 @@ app.use("/tags", tagRoutes);
 app.listen(3000, () => {
     console.log("Servidor ClickUp a correr na porta 3000");
 });
+
+
+
