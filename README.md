@@ -68,6 +68,27 @@ package.json
 .database/
     ddl-create-tables.sql
 
+
+```
+
+## Configuração do Ambiente
+
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```properties
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=gerenciador_tarefas_users
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# API Configuration
+API_URL=http://localhost:3000
 ```
 
 ## Endpoints da API

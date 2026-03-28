@@ -1,27 +1,31 @@
 import express from "express";
-import tasksRoutes from "./src/routes/tasksRoutes.js"; // Rotas de tasks
-import userRoutes from "./src/routes/userRoutes.js"; // Rotas de users
-import { requestLogger } from "./src/middlewares/logger.js"; // Middleware de logging
-import tagRoutes from "./src/routes/tagRoutes.js"; // Rotas de tags
-import dotenv from "dotenv"; // Para carregar variáveis de ambiente
+import cors from "cors";
+import tasksRoutes from "./src/routes/tasksRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
+import tagRoutes from "./src/routes/tagRoutes.js";
+import { requestLogger } from "./src/middlewares/logger.js";
+import dotenv from "dotenv";
 
-dotenv.config(); // Carrega variáveis de ambiente do .env
+dotenv.config();
 
 const app = express();
 
 app.use(requestLogger);
 
+app.use(
+  cors({
+    origin: ["http://127.0.0.1:5500", "http://localhost:5500", "http://127.0.0.1:5501", "http://localhost:5501"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 app.use(express.json());
 
-
 app.use("/tasks", tasksRoutes);
-app.use("/users", userRoutes); 
 app.use("/tags", tagRoutes);
+app.use("/users", userRoutes);
 
 app.listen(3000, () => {
     console.log("Servidor ClickUp a correr na porta 3000");
 });
-
-
-

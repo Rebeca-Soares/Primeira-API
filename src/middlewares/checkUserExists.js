@@ -1,7 +1,7 @@
 import * as userService from "../services/userService.js";
 
 export const checkUserExists = async (req, res, next) => {
-    const userId = req.params.id;   
+    const userId = req.params.id || req.body.userId; // Verifica se o ID do usuário está nos parâmetros ou no corpo da requisição
     const user = await userService.findUserById(userId);
     
     if (!user) {

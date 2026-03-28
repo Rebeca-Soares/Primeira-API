@@ -8,7 +8,6 @@ import { checkUserExists } from "../middlewares/checkUserExists.js";
 const router = express.Router();
 
 // Estaticas
-
 router.get("/stats", taskController.getTaskStats);
 
 // Tasks
