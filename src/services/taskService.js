@@ -1,73 +1,63 @@
 import { db } from "../../db.js";
 
-
 export const getAllTasks = async (search, sort) => {
-    let query = "SELECT * FROM tasks";
+    let query = "SELECT tasks.*, users.name as responsibleName FROM tasks LEFT JOIN users ON tasks.userId = users.id";
     const params = [];
 
-    // filtro por título
+    // Filtro por título 
     if (search) {
-        query += " WHERE title LIKE ?";
+        query += " WHERE tasks.title LIKE ?";
         params.push(`%${search}%`);
     }
 
-    // ordenação por título
+    // Ordenação por título
     if (sort === "asc") {
-        query += " ORDER BY title ASC";
+        query += " ORDER BY tasks.title ASC";
     } else if (sort === "desc") {
-        query += " ORDER BY title DESC";
+        query += " ORDER BY tasks.title DESC";
     }
 
     const [rows] = await db.query(query, params);
     return rows;
 }
 
-// Criação de tarefa com validação de título obrigatório e mínimo de caracteres
-export const createTask = async ({title, category, responsibleName}) => {
-
+// CORRIGIDO: Agora recebe e salva userId
+export const createTask = async ({title, category, userId}) => {
     if (!title || title.length <= 3) {
         return { error: "O titulo da tarefa é obrigatório e tem que ter mais de 3 caracteres" };
     }
 
-    //validação para a categoria
     const taskCategory = category || "Sem categoria";
 
-    const query = "INSERT INTO tasks (title, category, responsibleName, completed, conclusionDate, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
-
-    const [result] = await db.query(query, [title, taskCategory, responsibleName || null, false, null, new Date()]);
+    const query = "INSERT INTO tasks (title, category, userId, completed, conclusionDate, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
+    const [result] = await db.query(query, [title, taskCategory, userId || null, false, null, new Date()]);
 
     return {
         id: result.insertId,
         title,
         category: taskCategory,
-        responsibleName: responsibleName || null,
+        userId: userId || null,
         completed: false,
         conclusionDate: null,
-        crearedAt: new Date()
+        createdAt: new Date()
     };
 }
 
-// Busca tarefa por ID (usada no middleware de validação)
 export const findTaskById = async (id) => {
-    const [rows] = await db.query(
-        "SELECT * FROM tasks WHERE id = ?",
-        [id]);
-    return rows[0]; // Retorna o primeiro resultado ou undefined se não encontrado
+    const [rows] = await db.query("SELECT * FROM tasks WHERE id = ?", [id]);
+    return rows[0]; 
 };
 
-
-// Atualização de tarefa com lógica para definir ou limpar a data de conclusão
-export const updateTask = async (taskId, {title, category, responsibleName, completed}) => {
+// CORRIGIDO: Agora recebe e salva userId
+export const updateTask = async (taskId, {title, category, userId, completed}) => {
     const task =  await findTaskById(taskId);
 
-    // Atualização de dados de um usuario existente, mantendo os campos nao fornecidos (PUT/PATCH)
     const updatedTask = {
-    title: title ?? task.title,
-    category: category ?? task.category,
-    responsibleName: responsibleName ?? task.responsibleName
+        title: title ?? task.title,
+        category: category ?? task.category,
+        userId: userId !== undefined ? userId : task.userId
     }
 
-    // Gestão automatico do completed e data de conclusão
     let updatedCompleted = completed !== undefined ? completed : task.completed;
     let conclusionDate = task.conclusionDate;
 
@@ -79,29 +69,28 @@ export const updateTask = async (taskId, {title, category, responsibleName, comp
         }
     }
 
-    // Atualização do banco de dados
-    const query = "UPDATE tasks SET title = ?, category = ?, responsibleName = ?, completed = ?, conclusionDate = ? WHERE id = ?";
+    const query = "UPDATE tasks SET title = ?, category = ?, userId = ?, completed = ?, conclusionDate = ? WHERE id = ?";
     
     await db.query(query, [
         updatedTask.title,
         updatedTask.category,
-        updatedTask.responsibleName,
+        updatedTask.userId,
         updatedCompleted,
         conclusionDate,
         taskId
     ]);
 
-    //retorna tarefa atualizada
     return {
         id: taskId,
         title: updatedTask.title,
         category: updatedTask.category,
-        responsibleName: updatedTask.responsibleName,
+        userId: updatedTask.userId,
         completed: updatedCompleted,
         conclusionDate,
         createdAt: task.createdAt
     };
 }
+
 
 // Exclusão de tarefa e limpeza de associações com tags
 export const deleteTask = async (taskId) => {

@@ -14,10 +14,11 @@ CREATE TABLE tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     category VARCHAR(100) DEFAULT 'Sem categoria',
-    responsibleName VARCHAR(255),
+    userId INT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     conclusionDate DATETIME DEFAULT NULL,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Tabela de Tags
