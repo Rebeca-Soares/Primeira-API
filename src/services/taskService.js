@@ -26,6 +26,10 @@ export const createTask = async ({title, category, priority, userId}) => {
     if (!title || title.length <= 3) {
         return { error: "O titulo da tarefa é obrigatório e tem que ter mais de 3 caracteres" };
     }
+    
+    if (title.length > 100) {
+        return { error: `O título não pode ter mais de 100 caracteres. O teu tem ${title.length}.` };
+    }
 
     const taskCategory = category || "Sem categoria";
     const taskPriority = priority || "normal"; // Valor por defeito

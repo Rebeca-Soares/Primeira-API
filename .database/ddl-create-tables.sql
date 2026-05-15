@@ -12,7 +12,7 @@ CREATE TABLE users (
 -- Tabela de Tarefas
 CREATE TABLE tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(100) NOT NULL,
     category VARCHAR(100) DEFAULT 'Sem categoria',
         priority VARCHAR(50) DEFAULT 'normal',
     userId INT,
@@ -46,4 +46,12 @@ CREATE TABLE comments (
     dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE chat_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT DEFAULT 1,
+    role VARCHAR(50) NOT NULL, -- 'user' ou 'assistant'
+    content TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
 );
