@@ -3,6 +3,7 @@ import cors from "cors";
 import tasksRoutes from "./src/routes/tasksRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import tagRoutes from "./src/routes/tagRoutes.js";
+import aiRoutes from "./src/routes/aiRoutes.js";
 import { requestLogger } from "./src/middlewares/logger.js";
 import dotenv from "dotenv";
 
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use("/tasks", tasksRoutes);
 app.use("/tags", tagRoutes);
 app.use("/users", userRoutes);
+app.use("/ai", aiRoutes);
 
 app.listen(3000, () => {
     console.log("Servidor ClickUp a correr na porta 3000");

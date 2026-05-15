@@ -21,21 +21,24 @@ export const getAllTasks = async (search, sort) => {
     return rows;
 }
 
-// CORRIGIDO: Agora recebe e salva userId
-export const createTask = async ({title, category, userId}) => {
+
+export const createTask = async ({title, category, priority, userId}) => {
     if (!title || title.length <= 3) {
         return { error: "O titulo da tarefa é obrigatório e tem que ter mais de 3 caracteres" };
     }
 
     const taskCategory = category || "Sem categoria";
+    const taskPriority = priority || "normal"; // Valor por defeito
 
-    const query = "INSERT INTO tasks (title, category, userId, completed, conclusionDate, createdAt) VALUES (?, ?, ?, ?, ?, ?)";
-    const [result] = await db.query(query, [title, taskCategory, userId || null, false, null, new Date()]);
+
+    const query = "INSERT INTO tasks (title, category, priority, userId, completed, conclusionDate, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const [result] = await db.query(query, [title, taskCategory, taskPriority, userId || null, false, null, new Date()]);
 
     return {
         id: result.insertId,
         title,
         category: taskCategory,
+        priority: taskPriority,
         userId: userId || null,
         completed: false,
         conclusionDate: null,
@@ -49,12 +52,13 @@ export const findTaskById = async (id) => {
 };
 
 // CORRIGIDO: Agora recebe e salva userId
-export const updateTask = async (taskId, {title, category, userId, completed}) => {
+export const updateTask = async (taskId, {title, category, priority, userId, completed}) => {
     const task =  await findTaskById(taskId);
 
     const updatedTask = {
         title: title ?? task.title,
         category: category ?? task.category,
+        priority: priority ?? task.priority,
         userId: userId !== undefined ? userId : task.userId
     }
 
@@ -69,11 +73,12 @@ export const updateTask = async (taskId, {title, category, userId, completed}) =
         }
     }
 
-    const query = "UPDATE tasks SET title = ?, category = ?, userId = ?, completed = ?, conclusionDate = ? WHERE id = ?";
+    const query = "UPDATE tasks SET title = ?, category = ?, priority = ?, userId = ?, completed = ?, conclusionDate = ? WHERE id = ?";
     
     await db.query(query, [
         updatedTask.title,
         updatedTask.category,
+        updatedTask.priority,
         updatedTask.userId,
         updatedCompleted,
         conclusionDate,
@@ -84,6 +89,7 @@ export const updateTask = async (taskId, {title, category, userId, completed}) =
         id: taskId,
         title: updatedTask.title,
         category: updatedTask.category,
+        priority: updatedTask.priority,
         userId: updatedTask.userId,
         completed: updatedCompleted,
         conclusionDate,

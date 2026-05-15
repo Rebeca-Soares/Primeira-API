@@ -14,6 +14,7 @@ CREATE TABLE tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     category VARCHAR(100) DEFAULT 'Sem categoria',
+        priority VARCHAR(50) DEFAULT 'normal',
     userId INT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     conclusionDate DATETIME DEFAULT NULL,
